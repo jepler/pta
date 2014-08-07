@@ -1,0 +1,22 @@
+; A trivial file exercising the d8 assembler subset implemented so far
+
+; Copying and distribution of this file, with or without modification,
+; are permitted in any medium without royalty provided the copyright
+; notice and this notice are preserved.  This file is offered as-is,
+; without any warranty.
+    nop
+    nop
+    nop
+
+start:
+    ldib 0x0
+    stab ledloc
+    ldib 0xff
+    stab ledloc
+    jmp start
+
+ledloc = 0x123
+
+    ldab @x
+    ldab @x, 0
+    ldab @x, 19
