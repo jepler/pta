@@ -4,19 +4,19 @@
 ; are permitted in any medium without royalty provided the copyright
 ; notice and this notice are preserved.  This file is offered as-is,
 ; without any warranty.
-    nop
-    nop
-    nop
+    NOP
+    NoP
+    noP
 
 start:
-    ldib 0x0
-    stab ledloc
-    ldib 0xff
-    stab ledloc
-    jmp start
+    LDIB 0x0
+    STAB ledloc
+    LDIB 0xff
+    STAB ledloc
+    JMP start
 
 ledloc = 0x123
 
-    ldab @x
-    ldab @x, 0
-    ldab @x, 19
+    LDAB @X
+    LDAB @X, 0
+    LDAB @X, 19
