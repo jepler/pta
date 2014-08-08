@@ -71,8 +71,9 @@ STAR = (None, None)
 
 Identifier = Word( srange("[a-zA-Z_]"), srange("[a-zA-Z0-9_]") )
 Number = Regex(r"[-+]?(?:0x[0-9a-fA-F]*|0[0-7]*|[1-9][0-9]*|0)")
-Label = (Identifier + ":").setParseAction(lambda s, loc, toks: toks[0]
-    ).setResultsName("label")
+Colon = Literal(":")
+Label = Identifier.copy().setParseAction(
+    lambda s, loc, toks: toks[0]).setResultsName("label")
 
 Expression = Forward().setName("expression")
 Value = Identifier | Number | ('(' + Expression + ')')

@@ -65,6 +65,8 @@
 import getopt
 import os
 import sys
+import pta
+
 from pta.grammar import *
 
 Instruction = Forward()
@@ -74,12 +76,13 @@ Org = (Literal(".org") + Combine(Expression)).setResultsName("origin")
 Grammar = (
     Assignment
     #| (PyCode).setResultsName("pycode")
-    | (Optional(Label) + Instruction.setResultsName("instruction"))
-    | Label
-    | Org) * (None, 1)
+    | (Label + Optional(Colon) + Instruction.setResultsName("instruction"))
+    | (White() * STAR + Instruction.setResultsName("instruction"))
+    | (Label + Optional(Colon))
+    | Empty())
 
 def strip(line):
-    return line.strip().split(";", 1)[0]
+    return line.rstrip().split(";", 1)[0]
 
 class Assembler:
     def __init__(self):
