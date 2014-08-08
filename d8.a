@@ -15,7 +15,7 @@ start:
     STAB ledloc
     JMP start
 
-ledloc = $123
+ledloc equ $123
 
     LDAB @X
     LDAB @X, 0

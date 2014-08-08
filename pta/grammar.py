@@ -108,7 +108,7 @@ Expression <<= Sum | PyExpression
 
 PyCode = QuotedString("```", escChar="\\", unquoteResults=True
     ).setResultsName("pycode")
-Assignment = (Identifier.setResultsName("id") + "=" + Combine(Expression).setResultsName("expr")
+Assignment = (Identifier.setResultsName("id") + "equ" + Combine(Expression).setResultsName("expr")
     ).setResultsName("assignment")
 
 OpaquePart = Regex('[a-zA-Z0-9_]+|[^\s*,]')
