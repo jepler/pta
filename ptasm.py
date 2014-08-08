@@ -83,7 +83,7 @@ Grammar = (
     | Empty())
 
 def strip(line):
-    return line.rstrip().split(";", 1)[0]
+    return line.split(";", 1)[0].rstrip()
 
 class Assembler:
     def __init__(self):
