@@ -10,6 +10,7 @@
 #
 
 from pta.BasicWordInstruction import *
+Insn("DW *",              I16, 0x0000)
 
 #  This is the instruction set definition table for the Dumb8SQW
 #
