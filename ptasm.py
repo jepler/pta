@@ -71,13 +71,14 @@ from pta.grammar import *
 
 Instruction = Forward()
 
-Org = (Literal(".org") + Combine(Expression)).setResultsName("origin")
+Org = (Literal("org") + Combine(Expression)).setResultsName("origin")
 
 Grammar = (
     Assignment
     #| (PyCode).setResultsName("pycode")
     | (Label + Optional(Colon) + Instruction.setResultsName("instruction"))
     | (White() * STAR + Instruction.setResultsName("instruction"))
+    | (White() * STAR + Org)
     | (Label + Optional(Colon))
     | Empty())
 
