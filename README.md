@@ -7,8 +7,7 @@ ptasm - Table driven assembler
 
 SYNOPSIS
 --------
-[verse]
-'ptasm' [-t table.py] [file|'-']
+**ptasm** [*-t table.py*] [*file*|**-**]
 
 
 DESCRIPTION
@@ -20,10 +19,10 @@ architectures.
 
 OPTIONS
 -------
--t::
+* -t:
     Specify the instruction set table, which is a Python file that
     calls Insn() repeatedly to specify each instruction format.  The
-    default is +d8_tab.py+.
+    default is `d8_tab.py`.
 
 COPYRIGHT
 ---------
@@ -32,12 +31,11 @@ as a whole is under the following disjunctive dual license giving you the
 choice of one of the two following sets of free software/open source licensing
 terms:
 
-    * GNU General Public License (GPL), version 2.0 or later
-    * 3-clause BSD License
+* GNU General Public License (GPL), version 2.0 or later
+* 3-clause BSD License
 
 
-The GNU GPL License
-~~~~~~~~~~~~~~~~~~~
+### The GNU GPL License
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -54,25 +52,24 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
 
-The 3-clause BSD License
-~~~~~~~~~~~~~~~~~~~~~~~~
+### The 3-clause BSD License
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions
 are met:
 
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
+* Redistributions of source code must retain the above copyright
+  notice, this list of conditions and the following disclaimer.
 
-    * Redistributions in binary form must reproduce the above
-      copyright notice, this list of conditions and the following
-      disclaimer in the documentation and/or other materials
-      provided with the distribution.
+* Redistributions in binary form must reproduce the above
+  copyright notice, this list of conditions and the following
+  disclaimer in the documentation and/or other materials
+  provided with the distribution.
 
-    * Neither the name of Mesa Electronics nor the names of its
-      contributors may be used to endorse or promote products
-      derived from this software without specific prior written
-      permission.
+* Neither the name of Mesa Electronics nor the names of its
+  contributors may be used to endorse or promote products
+  derived from this software without specific prior written
+  permission.
 
 Disclaimer:
 
@@ -88,13 +85,3 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
 LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
-
-
-
-Copyright of this README file
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Copying and distribution of this file, with or without modification,
-are permitted in any medium without royalty provided the copyright
-notice and this notice are preserved.  This file is offered as-is,
-without any warranty.
