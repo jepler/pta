@@ -22,5 +22,5 @@ function mask2count(mask) {
         arg = sprintf("\"%s\",", insn);
     else
         arg = sprintf("\"%s %s\",", insn, pattern);
-    printf("Insn(%-20s %3s, 0x%02x)\n", arg,  check, bits / 256 );
+    printf("Insn(%-20s %3s, 0x%04x)\n", arg,  check, bits );
 }' "$@"

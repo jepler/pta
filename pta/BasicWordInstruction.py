@@ -74,8 +74,8 @@ def unbits(b, v):
     return v
 
 class BasicInstruction:
-    def __init__(self, hi8, _, arg=0):
-        self.hi8 = hi8
+    def __init__(self, insn, _, arg=0):
+        self.insn = insn
         self.arg = arg
 
     @property
@@ -83,7 +83,7 @@ class BasicInstruction:
 
     def assemble(self, assembler):
         v = assembler.symval(self.arg)
-        return [(self.hi8 << 8) | nbits(self.argwidth, v)]
+        return [self.insn | nbits(self.argwidth, v)]
 
 class I0(BasicInstruction): argwidth=0
 class I7(BasicInstruction): argwidth=7
