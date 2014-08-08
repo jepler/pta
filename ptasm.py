@@ -145,6 +145,13 @@ class Assembler:
                     self.rom[addr + i] = w
                 addr += instruction.length
 
+def resolve(fn, *args):
+    if os.sep in fn: return fn
+    for path in args:
+        fn1 = os.path.join(path, fn)
+        if os.path.exists(fn1): return fn1
+    return fn
+
 def main():
     tabname = "d8_tab.py"
     opts, args = getopt.getopt(sys.argv[1:], "t:")
@@ -169,10 +176,12 @@ def main():
             return b(*args + toks,  **kw)
         assembler.InstructionSet[a] = inner
 
+    resolved_tabname = resolve(tabname, os.curdir, os.path.dirname(pta.__file__), os.path.dirname(__file__))
     Value = lambda v: assembler.symval(v)
     ns = {'__name__': os.path.splitext(os.path.basename(tabname))[0],
+          '__file__': resolved_tabname,
             'Insn': Insn, 'assembler': assembler, 'Value': Value}
-    execfile(tabname, ns)
+    execfile(resolved_tabname, ns)
 
 
     global Instruction
