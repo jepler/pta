@@ -89,6 +89,8 @@ Assignment = (Identifier.setResultsName("id") + "=" + Combine(Expression).setRes
 OpaquePart = Regex('[a-zA-Z0-9_]+|[^\s*,]')
 Instruction = Identifier + (OpaquePart | "," | "*")*STAR
 
+def CILiteral(s): return Keyword(s, "", True)
+
 def InstructionPatternToParseElement(s, f):
     p = Instruction.parseString(s, True)
     indices = [0]
@@ -98,7 +100,7 @@ def InstructionPatternToParseElement(s, f):
             indices.append(i)
             parts.append(Combine(Expression))
         else:
-            parts.append(Literal(si))
+            parts.append(CILiteral(si))
 
     def extractparts(s, l, toks):
         return f(*(toks[i] for i in indices))
