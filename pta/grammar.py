@@ -70,13 +70,37 @@ PLUS = (None, 1)
 STAR = (None, None)
 
 Identifier = Word( srange("[a-zA-Z_]"), srange("[a-zA-Z0-9_]") )
-Number = Regex(r"[-+]?(?:0x[0-9a-fA-F]*|0[0-7]*|[1-9][0-9]*|0)")
+
+BinaryNumberPrefix = Regex("%[01]+").setParseAction(
+    lambda toks: [str(int(toks[0][1:], 2))])
+BinaryNumberSuffix = Regex("[01]+[bB]").setParseAction(
+    lambda toks: [str(int(toks[0][:-1], 2))])
+
+OctalNumberPrefix = Regex("@[0-7]+").setParseAction(
+    lambda toks: [str(int(toks[0][1:], 8))])
+OctalNumberSuffix = Regex("[0-7]+[oO]").setParseAction(
+    lambda toks: [str(int(toks[0][:-1], 8))])
+
+DecimalNumberSuffix = Regex("[0-9]+").setParseAction(
+    lambda toks: [str(int(toks[0], 10))])
+DecimalNumberNeutral = Regex("[0-9]+[dD]").setParseAction(
+    lambda toks: [str(int(toks[0][:-1], 10))])
+
+HexNumberPrefix = Regex("\$[0-9a-fA-f]+").setParseAction(
+    lambda toks: [str(int(toks[0][1:], 16))])
+HexNumberSuffix = Regex("[0-9][0-9a-fA-F]*[hH]").setParseAction(
+    lambda toks: [str(int(toks[0][:-1], 16))])
+
+Number = (BinaryNumberPrefix ^ BinaryNumberSuffix ^ OctalNumberPrefix ^
+    OctalNumberSuffix ^ DecimalNumberSuffix ^
+    HexNumberPrefix ^ HexNumberSuffix ^ DecimalNumberNeutral)
+
 Colon = Literal(":")
 Label = Identifier.copy().setParseAction(
     lambda s, loc, toks: toks[0]).setResultsName("label")
 
 Expression = Forward().setName("expression")
-Value = Identifier | Number | ('(' + Expression + ')')
+Value = Number | Identifier | ('(' + Expression + ')')
 Product = Value + (Word('*/', max=1) + Value) * STAR
 Sum = Product + (Word('-+', max=1) + Product) * STAR
 PyExpression = QuotedString("`", escChar="\\", unquoteResults=True)

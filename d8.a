@@ -9,13 +9,13 @@
     noP
 
 start:
-    LDIB 0x0
+    LDIB 0
     STAB ledloc
-    LDIB 0xff
+    LDIB 0ffh 
     STAB ledloc
     JMP start
 
-ledloc = 0x123
+ledloc = $123
 
     LDAB @X
     LDAB @X, 0
