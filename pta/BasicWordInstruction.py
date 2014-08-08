@@ -62,15 +62,19 @@
 #     ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 #     POSSIBILITY OF SUCH DAMAGE.
 
+import sys
+
 def nbits(b, v):
     if v >= (1<<b) or (b > 1 and v <= -(1<<(b-1))):
-        raise ValueError, "%d (0x%x) doesn't fit in %d bits" % (v, v, b)
+        #raise ValueError, "%d (0x%x) doesn't fit in %d bits" % (v, v, b)
+        print >>sys.stderr, "Warning: %d (0x%x) doesn't fit in %d bits" % (v, v, b)
     return v & ((1<<b) - 1)
 _8 = lambda v: nbits(8)
 
 def unbits(b, v):
     if v >= (1<<b) or v < 0:
-        raise ValueError, "%d (0x%x) doesn't fit in %d bits" % (v, v, b)
+        #raise ValueError, "%d (0x%x) doesn't fit in %d bits" % (v, v, b)
+        print >>sys.stderr, "Warning: %d (0x%x) doesn't fit in %d bits" % (v, v, b)
     return v
 
 class BasicInstruction:
