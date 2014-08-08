@@ -124,6 +124,8 @@ def InstructionPatternToParseElement(s, f):
         if si == "*":
             indices.append(i)
             parts.append(Combine(Expression))
+        elif i == 0:
+            parts.append(Keyword(si, caseless=True))
         else:
             parts.append(CILiteral(si))
 

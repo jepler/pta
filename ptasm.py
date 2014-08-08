@@ -87,7 +87,7 @@ def strip(line):
 
 class Assembler:
     def __init__(self):
-        self.InstructionSet = {}
+        self.InstructionSet = []
 
     def run(self, program, filename):
         self.rom = {}
@@ -175,7 +175,7 @@ def main():
         def inner(*toks):
             if toks is None: return
             return b(*args + toks,  **kw)
-        assembler.InstructionSet[a] = inner
+        assembler.InstructionSet.append((a, inner))
 
     resolved_tabname = resolve(tabname, os.curdir, os.path.dirname(pta.__file__), os.path.dirname(__file__))
     Value = lambda v: assembler.symval(v)
@@ -186,8 +186,8 @@ def main():
 
 
     global Instruction
-    Instruction <<= Or(Group(InstructionPatternToParseElement(k, v))
-        for k, v in assembler.InstructionSet.items())
+    Instruction <<= MatchFirst(Group(InstructionPatternToParseElement(k, v))
+        for k, v in assembler.InstructionSet)
 
     assembler.run(program, filename)
     max_insn = max(assembler.rom.keys())
