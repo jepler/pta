@@ -71,6 +71,8 @@ STAR = (None, None)
 
 Identifier = Word( srange("[a-zA-Z_]"), srange("[a-zA-Z0-9_]") )
 
+CharConstant = Regex(r"'(\\.|.)'").setParseAction(
+    lambda toks: [str(ord(eval(toks[0])))])
 BinaryNumberPrefix = Regex("%[01]+").setParseAction(
     lambda toks: [str(int(toks[0][1:], 2))])
 BinaryNumberSuffix = Regex("[01]+[bB]").setParseAction(
@@ -91,7 +93,7 @@ HexNumberPrefix = Regex("\$[0-9a-fA-f]+").setParseAction(
 HexNumberSuffix = Regex("[0-9][0-9a-fA-F]*[hH]").setParseAction(
     lambda toks: [str(int(toks[0][:-1], 16))])
 
-Number = (BinaryNumberPrefix ^ BinaryNumberSuffix ^ OctalNumberPrefix ^
+Number = (CharConstant ^ BinaryNumberPrefix ^ BinaryNumberSuffix ^ OctalNumberPrefix ^
     OctalNumberSuffix ^ DecimalNumberSuffix ^
     HexNumberPrefix ^ HexNumberSuffix ^ DecimalNumberNeutral)
 
