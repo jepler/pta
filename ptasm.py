@@ -186,7 +186,7 @@ def main():
 
 
     global Instruction
-    Instruction <<= MatchFirst(Group(InstructionPatternToParseElement(k, v))
+    Instruction <<= Or(Group(InstructionPatternToParseElement(k, v))
         for k, v in assembler.InstructionSet)
 
     assembler.run(program, filename)
