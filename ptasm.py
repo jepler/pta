@@ -75,6 +75,7 @@ Org = (Literal("org") + Combine(Expression)).setResultsName("origin")
 
 Grammar = (
     Assignment
+    | Literal(".end")
     #| (PyCode).setResultsName("pycode")
     | (Label + Optional(Colon) + Instruction.setResultsName("instruction"))
     | (White() * STAR + Instruction.setResultsName("instruction"))
