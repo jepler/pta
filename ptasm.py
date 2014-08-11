@@ -78,7 +78,7 @@ Grammar = (
     | Literal(".end")
     #| (PyCode).setResultsName("pycode")
     | (Label + Optional(Colon) + Instruction.setResultsName("instruction"))
-    | (White() * STAR + Instruction.setResultsName("instruction"))
+    | (White() * PLUS + Instruction.setResultsName("instruction"))
     | (White() * STAR + Org)
     | (Label + Optional(Colon))
     | Empty())
