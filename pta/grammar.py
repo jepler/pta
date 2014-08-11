@@ -101,12 +101,14 @@ Colon = Literal(":")
 Label = Identifier.copy().setParseAction(
     lambda s, loc, toks: toks[0]).setResultsName("label")
 
+def Literals(*args): return Or(Literal(a) for a in args)
+
+InfixOperator = Literals(*'+ - * / % << >> == = != <= >= < > & | ^'.split())
 Expression = Forward().setName("expression")
-Value = Number | Identifier | ('(' + Expression + ')')
-Product = Value + (Word('*/', max=1) + Value) * STAR
-Sum = Product + (Word('-+', max=1) + Product) * STAR
+Value = Number | Identifier | Group('(' + Expression + ')')
+Infix = Group(Value + (InfixOperator + Value) * STAR)
 PyExpression = QuotedString("`", escChar="\\", unquoteResults=True)
-Expression <<= Sum | PyExpression
+Expression <<= Infix | PyExpression
 
 PyCode = QuotedString("```", escChar="\\", unquoteResults=True
     ).setResultsName("pycode")
