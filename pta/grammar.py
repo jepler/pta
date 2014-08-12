@@ -111,11 +111,12 @@ def Literals(*args): return Or(Literal(a) for a in args)
 
 InfixOperator = Literals(*'+ - * / % << >> == = != <= >= < > & | ^'.split())
 Expression = Forward().setName("expression")
-Value = Number | Identifier | Group('(' + Expression + ')')
-Infix = Group(Value + (InfixOperator + Value) * STAR)
+Atom = Number | Identifier | Group('(' + Expression + ')')
+Infix = Group(Atom + (InfixOperator + Atom) * STAR)
 PyExpression = QuotedString("`", escChar="\\", unquoteResults=True)
 Expression <<= Infix | PyExpression
 Value = Combine(Expression).setResultsName("value")
+ValueList = (Value + (Literal(",") + Value) * STAR ^ Empty())
 PyCode = QuotedString("```", escChar="\\", unquoteResults=True
     ).setResultsName("pycode")
 Assignment = (Identifier.setResultsName("id") + "equ" + Combine(Expression).setResultsName("expr")

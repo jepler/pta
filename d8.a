@@ -23,3 +23,11 @@ ledloc .equ $123
     LDAB @X, 0
     LDAB @X, 19
     LDAB @ X, 19
+
+    .dw $1234
+    .msfirst
+    .word $1234
+    .lsfirst
+    .word $1234
+
+    .dw 1,2,3

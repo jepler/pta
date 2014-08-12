@@ -67,6 +67,7 @@ import os
 import sys
 import pta
 import collections
+import struct
 
 from pta.grammar import *
 
@@ -116,17 +117,41 @@ class Assembler(object):
             (Identifier.copy().setResultsName("label") + Optional(Colon) + IP) ^
             Empty())
 
+        self.msfirst = False
+
+    def exprlist(self, exprs):
+        exprs = ValueList.parseString(exprs, True)
+        return map(self.value, exprs[::2])
+
+    def expr(self, expr):
+        return self.value(Value.parseString(expr, True).value)
+
+    def assignexpr(self, label, expr):
+        self.assign(label, self.expr(expr))
+
     def pseudo_equ(self, no, label, expr):
-        if no == 1:
-            expr = Value.parseString(expr, True).value
-            self.assign(label, self.value(expr))
+        if no == 1: self.assignexpr(label, expr)
 
     def pseudo_org(self, no, label, expr):
-        expr = Value.parseString(expr, True).value
-        value = self.value(expr)
+        value = self.expr(expr)
         if no == 1 and label:
             self.assign(label, value)
         self.addr = value
+
+    def pseudo_word(self, no, label, expr):
+        if no == 1: return
+        values = self.exprlist(expr)
+        for addr, value in enumerate(values, self.addr):
+            if not self.msfirst:
+                value = struct.unpack("<H", struct.pack(">H", value))[0]
+            self.rom[addr] = value
+        self.addr += len(values)
+    pseudo_dw = pseudo_word
+
+    def pseudo_msfirst(self, no, label, expr):
+        self.msfirst = True
+    def pseudo_lsfirst(self, no, label, expr):
+        self.msfirst = False
 
     def pseudo_end(self, no, label, expr):
         Empty().parseString(expr, True)
@@ -175,7 +200,9 @@ class Assembler(object):
     def value(self, expr):
         if not expr: return 0
         return eval(expr, self.symbols)
+
     def assign(self, name, value):
+        print '# assign', name, repr(value)
         self.symbols[name] = value
 
     def error(self, lno, err):
