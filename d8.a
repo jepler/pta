@@ -4,6 +4,8 @@
 ; are permitted in any medium without royalty provided the copyright
 ; notice and this notice are preserved.  This file is offered as-is,
 ; without any warranty.
+
+zaroo
     NOP
     NoP
     noP
@@ -15,7 +17,7 @@ start:
     STAB ledloc
     JMP start
 
-ledloc equ $123
+ledloc .equ $123
 
     LDAB @X
     LDAB @X, 0

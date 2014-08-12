@@ -86,7 +86,7 @@ class BasicInstruction:
     def length(self): return 1
 
     def assemble(self, assembler):
-        v = assembler.symval(self.arg)
+        v = assembler.value(self.arg)
         return [self.insn | nbits(self.argwidth, v)]
 
 class I0(BasicInstruction): argwidth=0

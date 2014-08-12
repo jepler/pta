@@ -64,6 +64,12 @@
 
 from pyparsing import *
 
+# setParseAction's wrapper balls us up real bad
+def setRawParseAction(o, x):
+    o.parseAction = [x]
+    return o
+ParserElement.setRawParseAction = setRawParseAction
+
 if not hasattr(Forward, "__ilshift__"):
     Forward.__ilshift__ = Forward.__lshift__
 PLUS = (None, 1)
@@ -109,33 +115,34 @@ Value = Number | Identifier | Group('(' + Expression + ')')
 Infix = Group(Value + (InfixOperator + Value) * STAR)
 PyExpression = QuotedString("`", escChar="\\", unquoteResults=True)
 Expression <<= Infix | PyExpression
-
+Value = Combine(Expression).setResultsName("value")
 PyCode = QuotedString("```", escChar="\\", unquoteResults=True
     ).setResultsName("pycode")
 Assignment = (Identifier.setResultsName("id") + "equ" + Combine(Expression).setResultsName("expr")
     ).setResultsName("assignment")
 
-OpaquePart = Regex('[a-zA-Z0-9_]+|[^\s*,]')
-Instruction = Identifier + (OpaquePart | "," | "*")*STAR
+OpaquePart = Regex('[^*]+|[*]')
+Args = OpaquePart*STAR
 
 def CILiteral(s): return Keyword(s, "", True)
 
-def InstructionPatternToParseElement(s, f):
-    p = Instruction.parseString(s, True)
-    indices = [0]
+def InstructionPatternToParseElement(func, pattern):
+    try:
+        p = Args.parseString(pattern, True)
+    except ParseException as e:
+        raise ValueError, str(e)
+    indices = []
     parts = []
     for i, si in enumerate(p):
         if si == "*":
             indices.append(i)
             parts.append(Combine(Expression))
-        elif i == 0:
-            parts.append(Keyword(si, caseless=True))
         else:
             parts.append(CILiteral(si))
 
     def extractparts(s, l, toks):
-        return f(*(toks[i] for i in indices))
-    rule = And(parts)
-    # setParseAction's wrapper balls us up real bad
-    rule.parseAction = [extractparts]
+        return func(*(toks[i] for i in indices))
+    if not parts: rule = Empty()
+    else: rule = And(parts)
+    rule.setRawParseAction(extractparts)
     return rule
