@@ -121,7 +121,7 @@ PyCode = QuotedString("```", escChar="\\", unquoteResults=True
 Assignment = (Identifier.setResultsName("id") + "equ" + Combine(Expression).setResultsName("expr")
     ).setResultsName("assignment")
 
-OpaquePart = Regex('[^*]+|[*]')
+OpaquePart = Regex('.')
 Args = OpaquePart*STAR
 
 def CILiteral(s): return Keyword(s, "", True)

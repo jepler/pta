@@ -22,3 +22,4 @@ ledloc .equ $123
     LDAB @X
     LDAB @X, 0
     LDAB @X, 19
+    LDAB @ X, 19
