@@ -71,7 +71,6 @@ import struct
 
 from pta.grammar import *
 
-OptLabel = ((White() * PLUS)) ^ (Label + Optional(Colon))
 OptArgs = Optional(Regex(r"([^;'\\]|\\.|'\\.'|'[^\\']')+")).setResultsName("args")
 OptComment = Regex(r"\s*(;.*)?")
 
