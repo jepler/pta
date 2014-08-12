@@ -72,13 +72,12 @@ import struct
 from pta.grammar import *
 
 OptLabel = ((White() * PLUS)) ^ (Label + Optional(Colon))
-OptArgs = Optional(Regex(".+")).setResultsName("args")
+OptArgs = Optional(Regex(r"([^;'\\]|\\.|'\\.'|'[^\\']')+")).setResultsName("args")
+OptComment = Regex(r"\s*(;.*)?")
 
 Mnemonic = Identifier.copy().setResultsName("mnemonic")
 Directive = Word( ".", srange("[a-zA-Z0-9_]") ).setResultsName("pseudoop")
 
-def strip(line):
-    return line.split(";", 1)[0].rstrip()
 
 class Instruction:
     def __init__(self, op, args):
@@ -113,9 +112,9 @@ class Assembler(object):
         IP = Optional(Instr ^ Pseudo)
 
         self.Grammar = (
-            (White() + IP) ^
-            (Identifier.copy().setResultsName("label") + Optional(Colon) + IP) ^
-            Empty())
+            (White() + IP + OptComment) ^
+            (Identifier.copy().setResultsName("label") + Optional(Colon) + IP + OptComment) ^
+            OptComment)
 
         self.msfirst = False
 
@@ -185,8 +184,6 @@ class Assembler(object):
         self.pass2()
 
     def input_line(self, lno, line):
-        line = line.split(";", 1)[0]
-        line = line.rstrip()
         self.lno = lno
         print "%s: %s" % (lno, line)
         p = self.Grammar.parseString(line, True)
