@@ -68,6 +68,7 @@ import sys
 import pta
 import collections
 import struct
+import re
 
 from pta.grammar import *
 
@@ -77,6 +78,7 @@ OptComment = Regex(r"\s*(;.*)?")
 Mnemonic = Identifier.copy().setResultsName("mnemonic")
 Directive = Word( ".", srange("[a-zA-Z0-9_]") ).setResultsName("pseudoop")
 
+word_re = re.compile(r"[.a-zA-Z_][a-zA-Z0-9_]*\b")
 
 class Instruction:
     def __init__(self, op, args):
@@ -96,8 +98,26 @@ class Pseudo:
     def __str__(self): return "Pseudo(%r, %r)" % (self.op, self.args)
 
     def __call__(self, assembler, no, label):
-        func = getattr(assembler, self.attr)
+        func = getattr(assembler, self.attr.lower())
         return func(no, label, self.args)
+
+class Macro:
+    def __init__(self, name, sig, filename, firstline):
+        self.name = name
+        self.filename = filename
+        self.firstline = firstline+1
+        self.sig = sig.split(",")
+        self.re = re.compile(r"\b(" + "|".join(sig) + ")\b")
+        self.lines = []
+        self.append = self.lines.append
+
+    def subst(self, line, d):
+        return self.re.subn(lambda x: d.get(x.group(0)), line)[0]
+
+    def __call__(self, assembler, args, target):
+        values = args.split(",", 1)
+        lines = [self.subst(l, dict(zip(self.sig, values))) for l in self.lines]
+        assembler.preprocess(self.filename, target, lines, self.firstline)
 
 class Assembler(object):
     def __init__(self):
@@ -128,6 +148,7 @@ class Assembler(object):
         self.assign(label, self.expr(expr))
 
     def pseudo_equ(self, no, label, expr):
+        print "equ", repr(label), repr(expr)
         if no == 1: self.assignexpr(label, expr)
 
     def pseudo_org(self, no, label, expr):
@@ -176,22 +197,76 @@ class Assembler(object):
     def run(self, program, filename):
         self.rom = {}
         self.symbols = {}
+        self.macros = {}
+        self.defines = {}
 
-        self.input(program, filename)
-        # self.macro()
+        self.lines = []
+        self.preprocess(filename)
+
         self.pass1()
         self.pass2()
 
-    def input_line(self, lno, line):
-        self.lno = lno
-        print "%s: %s" % (lno, line)
-        p = self.Grammar.parseString(line, True)
-        return lno, p
+    def ismacro(self, line):
+        parts = line.split(None, 1)
+        if not parts: return False
+        return parts[0] in self.macros
 
-    def input(self, program, filename):
-        self.filename = filename
-        self.program = [self.input_line(i+1, line)
-            for i, line in enumerate(program.split("\n"))]
+    def expandmacro(self, line, target):
+        parts = line.split(None, 1)
+        if not parts: return False
+        macro = self.macros.get(parts[0])
+        if not macro: return False
+        macro(self, parts[1] if len(parts) > 1 else "", target)
+        return True
+
+    def create_define(self, line):
+        parts = line.split(None, 2)
+        if len(parts) != 3:
+            self.error("Missing substitution in #define")
+        self.defines[parts[1]] = parts[2].rstrip()
+
+    def expand_defines(self, line):
+        def replace(s):
+            s = s.group(0)
+            print "%s -> %s" % (s, self.defines.get(s, s))
+            return self.defines.get(s, s)
+        return word_re.subn(replace, line)[0]
+
+    def preprocess(self, filename, target = None, lines = None, firstline=1):
+        if not target: target = self.lines.append
+
+        if lines is None:
+            if filename == '-':
+                line = list(sys.stdin)
+            else:
+                with open(filename, "U") as f: lines = list(f)
+
+        self.symbols['__filename__'] = filename
+        for lno, line in enumerate(lines, firstline):
+            self.symbols['__lno__'] = lno
+            print "%s:%d: %s" % (filename, lno, line.rstrip())
+            if line.startswith("#include"):
+                self.preprocess(line.strip().split()[1], target)
+                continue
+            elif line.startswith("#define"):
+                self.create_define(line)
+                print self.defines.keys()
+                continue
+            line = self.expand_defines(line)
+            print "%s:%d: %s" % (filename, lno, line.rstrip())
+            
+            if line.startswith(".macro"):
+                _, name, sig = line.split(None, 2)
+                self.macros[name] = mac = Macro(name, sig, filename, lno)
+                self.target = mac.append
+            elif line.startswith(".endm"):
+                self.target = self.lines.append
+            elif line.startswith(".end"):
+                return
+            elif self.expandmacro(line, target):
+                pass
+            else:
+                target((filename, lno, self.Grammar.parseString(line.rstrip(), True)))
 
     def value(self, expr):
         if not expr: return 0
@@ -205,9 +280,20 @@ class Assembler(object):
         print "%s:%d: %s" % (self.filename, lno, err)
         raise SystemExit
 
+    def pushline(self, line):
+        self.flow.appendleft(line)
+
+    def pushlines(self, lines):
+        self.flow.extendleft(lines)
+
+    def flow_exit(self):
+        del self.flow
+
     def flow_control(self):
-        for i in range(0, len(self.program)):
-            lno, line = self.program[i]
+        self.flow = collections.deque(self.lines)
+        while self.flow:
+            filename, lno, line = self.flow.popleft()
+            self.symbols['__filename__'] = filename
             self.symbols['__lno__'] = lno
             yield line
 
