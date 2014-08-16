@@ -109,10 +109,12 @@ Label = Identifier.copy().setParseAction(
 
 def Literals(*args): return Or(Literal(a) for a in args)
 
-InfixOperator = Literals(*'+ - * / % << >> == = != <= >= < > & | ^'.split())
 Expression = Forward().setName("expression")
 Atom = Number | Identifier | Group('(' + Expression + ')')
-Infix = Group(Atom + (InfixOperator + Atom) * STAR)
+PrefixOperator = Literals(*'- + ~'.split())
+Prefix = PrefixOperator * STAR + Atom
+InfixOperator = Literals(*'+ - * / % << >> == = != <= >= < > & | ^'.split())
+Infix = Group(Prefix + (InfixOperator + Prefix) * STAR)
 PyExpression = QuotedString("`", escChar="\\", unquoteResults=True)
 Expression <<= Infix | PyExpression
 Value = Combine(Expression).setResultsName("value")
