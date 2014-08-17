@@ -99,9 +99,10 @@ HexNumberPrefix = Regex("\$[0-9a-fA-f]+").setParseAction(
 HexNumberSuffix = Regex("[0-9][0-9a-fA-F]*[hH]").setParseAction(
     lambda toks: [str(int(toks[0][:-1], 16))])
 
+StringLiteral = Regex(r'\"(\\.|[^"\\])*\"')
 Number = (CharConstant ^ BinaryNumberPrefix ^ BinaryNumberSuffix ^ OctalNumberPrefix ^
     OctalNumberSuffix ^ DecimalNumberSuffix ^
-    HexNumberPrefix ^ HexNumberSuffix ^ DecimalNumberNeutral)
+    HexNumberPrefix ^ HexNumberSuffix ^ DecimalNumberNeutral ^ StringLiteral)
 
 Colon = Literal(":")
 Label = Identifier.copy().setParseAction(

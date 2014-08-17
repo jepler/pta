@@ -78,6 +78,7 @@ Insn("STAB SP",            I0, 0x0f80)
 #  BIT OPERAND, PROGRAM ADDRESS FOR JUMPS
 #  iiii 0aaa aaaa aaaa DIRECT INSTRUCTIONS
 Insn("JMP *",             I11, 0x1000)
+Insn("JMPA *",            I11, 0x1000)
 Insn("JMPNZ *",           I11, 0x2000)
 Insn("JMPZ *",            I11, 0x3000)
 Insn("JMPNC *",           I11, 0x4000)

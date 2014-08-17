@@ -106,17 +106,27 @@ class Macro:
         self.name = name
         self.filename = filename
         self.firstline = firstline+1
-        self.sig = sig.split(",")
-        self.re = re.compile(r"\b(" + "|".join(sig) + ")\b")
+        self.sig = sig.strip().split(",")
+        if sig:
+            self.re = re.compile(r"\b(" + "|".join(self.sig) + r")\b")
+            print "RX", name, (r"\b(" + "|".join(self.sig) + r")\b")
+        else:
+            self.re = None
         self.lines = []
         self.append = self.lines.append
 
-    def subst(self, line, d):
-        return self.re.subn(lambda x: d.get(x.group(0)), line)[0]
+    def subst(self, (filename, lno, line), d):
+        if self.re:
+            line = self.re.subn(lambda x: d.get(x.group(0)), line)[0]
+        return line
 
     def __call__(self, assembler, args, target):
-        values = args.split(",", 1)
-        lines = [self.subst(l, dict(zip(self.sig, values))) for l in self.lines]
+        if self.sig:
+            values = args.strip().split(",")
+            lines = [self.subst(l, dict(zip(self.sig, values)))
+                    for l in self.lines]
+            print "| Expansion of", self.name
+            for i in lines: print "||", i
         assembler.preprocess(self.filename, target, lines, self.firstline)
 
 class Assembler(object):
@@ -131,7 +141,8 @@ class Assembler(object):
         IP = Optional(Instr ^ Pseudo)
 
         self.Grammar = (
-            (White() + IP + OptComment) ^
+            Pseudo ^
+            (White() + Instr + OptComment) ^
             (Identifier.copy().setResultsName("label") + Optional(Colon) + IP + OptComment) ^
             OptComment)
 
@@ -150,6 +161,7 @@ class Assembler(object):
     def pseudo_equ(self, no, label, expr):
         print "equ", repr(label), repr(expr)
         if no == 1: self.assignexpr(label, expr)
+    pseudo_set = pseudo_equ
 
     def pseudo_org(self, no, label, expr):
         value = self.expr(expr)
@@ -171,6 +183,13 @@ class Assembler(object):
         self.msfirst = True
     def pseudo_lsfirst(self, no, label, expr):
         self.msfirst = False
+
+    def pseudo_echo(self, no, label, expr):
+        if expr.startswith('"'): print "ECHO:", expr
+        else: print self.expr(expr)
+
+    def pseudo_label(self, no, label, expr):
+        self.assign(expr, self.addr)
 
     def pseudo_end(self, no, label, expr):
         Empty().parseString(expr, True)
@@ -198,12 +217,16 @@ class Assembler(object):
         self.rom = {}
         self.symbols = {}
         self.macros = {}
-        self.defines = {}
+        self.nunique = 0
+        self.lstack = []
+        self.defines = {'LABEL': self.label, 'UNIQUE': self.unique, 'DUP': self.dup, 'SWAP': self.swap}
 
         self.lines = []
         self.preprocess(filename)
 
+        print "pass1"
         self.pass1()
+        print "pass2"
         self.pass2()
 
     def ismacro(self, line):
@@ -215,6 +238,7 @@ class Assembler(object):
         parts = line.split(None, 1)
         if not parts: return False
         macro = self.macros.get(parts[0])
+        print "expandmacro", repr(parts[0]), macro
         if not macro: return False
         macro(self, parts[1] if len(parts) > 1 else "", target)
         return True
@@ -229,44 +253,87 @@ class Assembler(object):
         def replace(s):
             s = s.group(0)
             print "%s -> %s" % (s, self.defines.get(s, s))
-            return self.defines.get(s, s)
+            s = self.defines.get(s, s)
+            if callable(s): s = s()
+            return s
+
         return word_re.subn(replace, line)[0]
 
-    def preprocess(self, filename, target = None, lines = None, firstline=1):
-        if not target: target = self.lines.append
+    def unique(self):
+        self.nunique += 1
+        print ">> UNIQUE", self.lstack, len(self.lstack),
+        self.lstack.append("__u_%d" % self.nunique)
+        print self.lstack, len(self.lstack)
+        return ''
 
+    def dup(self):
+        print ">> DUP", self.lstack, len(self.lstack),
+        self.lstack.append(self.lstack[-1])
+        print self.lstack, len(self.lstack)
+        return ''
+
+    def swap(self):
+        print ">> SWAP", self.lstack, len(self.lstack),
+        a = self.lstack.pop()
+        b = self.lstack.pop()
+        self.lstack.append(a)
+        self.lstack.append(b)
+        print self.lstack, len(self.lstack)
+        return ''
+
+    def label(self):
+        if self.lstack:
+            print ">> LABEL", self.lstack, len(self.lstack),
+            result = self.lstack.pop()
+            print self.lstack, len(self.lstack)
+            return result
+        else:
+            print "!!! pop from empty list"
+            return 'undefined'
+
+    def preprocess(self, filename, target = None, lines = None, firstline=1):
+        def basetarget((filename, lno, line)):
+            line = self.expand_defines(line)
+            print "%s:%d: %r" % (filename, lno, line)
+            self.lines.append((filename, lno,
+                self.Grammar.parseString(line, True)))
+        if not target: target = basetarget
         if lines is None:
             if filename == '-':
                 line = list(sys.stdin)
             else:
                 with open(filename, "U") as f: lines = list(f)
 
-        self.symbols['__filename__'] = filename
         for lno, line in enumerate(lines, firstline):
+            self.symbols['__filename__'] = filename
             self.symbols['__lno__'] = lno
             print "%s:%d: %s" % (filename, lno, line.rstrip())
-            if line.startswith("#include"):
+            line = line.rsplit(";", 1)[0]
+            if line.startswith("#include") or line.startswith(".include"):
                 self.preprocess(line.strip().split()[1], target)
                 continue
-            elif line.startswith("#define"):
+            elif line.lower().startswith("#define"):
                 self.create_define(line)
                 print self.defines.keys()
                 continue
-            line = self.expand_defines(line)
-            print "%s:%d: %s" % (filename, lno, line.rstrip())
             
             if line.startswith(".macro"):
-                _, name, sig = line.split(None, 2)
+                parts = line.split(None, 2)
+                if len(parts) == 2:
+                    name, sig = parts[1], ''
+                else:
+                    _, name, sig = parts
                 self.macros[name] = mac = Macro(name, sig, filename, lno)
-                self.target = mac.append
+                target = mac.append
             elif line.startswith(".endm"):
-                self.target = self.lines.append
+                self.target = basetarget
             elif line.startswith(".end"):
                 return
             elif self.expandmacro(line, target):
                 pass
             else:
-                target((filename, lno, self.Grammar.parseString(line.rstrip(), True)))
+                print "%s:%d: %s" % (filename, lno, line.rstrip())
+                target((filename, lno, line.rstrip()))
 
     def value(self, expr):
         if not expr: return 0
