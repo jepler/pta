@@ -2,12 +2,18 @@
 import sys
 
 address_spaces = {'eword': 'eeprom', 'ebyte': 'eeprom'}
-offsets = {None: 2048, 'eeprom': 0}
+hardoffsets = {None: 0, 'eeprom': 0}
+offsets = {None: 0, 'eeprom': 0}
+numformat = "0%Xh"
 sizes = {
-    'byte': 1, 'bint': 1, 'ebyte': 1,
+    'byte': 1, 'bint': 1, 'ebyte': 1, 'enum': 1,
     'ulong': 4, 'long':4,
     'double': 8,
 }
+
+if len(sys.argv) > 1 and sys.argv[1] == "--8i20":
+    hardoffsets[None] = 2048
+    numformat = "%d"
 
 def calc(value, kind):
     address_space = address_spaces.get(kind)
@@ -23,7 +29,8 @@ def calc(value, kind):
         else: value = int(value)
         result = value
         offsets[address_space] = result + size
-    return result
+    return numformat % (
+        result + hardoffsets.get(address_space, hardoffsets[None]))
 
 for line in sys.stdin:
     line = line.strip("\032")
@@ -44,7 +51,7 @@ for line in sys.stdin:
     parts = line.split(None, 3)
 
     if len(parts) == 2:
-        print "%s .equ 0%s" % (parts[0], parts[1])
+        print "%s equ 0%s" % (parts[0], parts[1])
         continue
 
     name, value, kind = parts[:3]
@@ -52,10 +59,7 @@ for line in sys.stdin:
     kind = kind.strip("%")
     value = calc(value, kind)
 
-    print "%(name)-20s .equ %(value)-20s ; %(comment)s" % {
-        'name': name, 'value': value, 'comment': comment
-    }
     name = name + "_" + kind
-    print "%(name)-20s .equ %(value)-20s ; %(comment)s" % {
+    print "%(name)-20s equ %(value)-20s ; %(comment)s" % {
         'name': name, 'value': value, 'comment': comment
     }
