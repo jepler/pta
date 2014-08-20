@@ -413,6 +413,7 @@ class Assembler(object):
             if line.instruction:
                 op = line.instruction[0].assemble(self)
                 if isinstance(op, int): op = [op]
+                print "## %04x" % self.addr, " ".join("%04x" % o for o in op)
                 for addr, opc in enumerate(op, self.addr):
                     self.rom[self.addr] = opc
                 self.addr += len(op)
@@ -454,7 +455,7 @@ def resolve(fn, *args):
 
 def main():
     tabname = "d8_tab.py"
-    opts, args = getopt.getopt(sys.argv[1:], "t:")
+    opts, args = getopt.getopt(sys.argv[1:], "t:o:")
 
     if not args:
         filename = '-'
@@ -464,6 +465,7 @@ def main():
 
     for k, v in opts:
         if k == '-t': tabname = v
+        if k == '-o': objname = v
 
     if filename == '-': program = sys.stdin.read()
     else: program = open(filename).read()
@@ -482,4 +484,11 @@ def main():
             print "%04x" % (b or 0),
         print
 
+    if objname:
+        with open(objname, "w") as f:
+            for i in range(0, len(rom), 8):
+                for b in rom[i:i+8]:
+                    print >>f, "%04x" % (b or 0),
+                print >>f
+ 
 if __name__ == '__main__': main()
